@@ -60,8 +60,7 @@ void logOperation(const char *hunt_id, char *message) {
     symlink(log_path, symlink_name); //create the symlink to the log file named 'symlink_name'
 }
 
-void addTreasure(char *hunt_id){
-    //directory for hunt
+void addTreasure(char *hunt_id) {
     if(mkdir(hunt_id, 0755) < 0){
         perror("An error occured while trying to create the directory!\n");
         exit(-1);
@@ -74,31 +73,105 @@ void addTreasure(char *hunt_id){
         perror(NULL);
         exit(-1);
     }
-        
+
     Treasure t;
     char buffer[128];
 
-    writeString("Treasure ID: ");
-    readInput(STDIN_FILENO, buffer, sizeof(buffer));
-    t.id = atoi(buffer);
+    //id
+    while(1){
+        writeString("Treasure ID: ");
+        readInput(STDIN_FILENO, buffer, sizeof(buffer));
+        int valid = 1;
+        for(int i = 0; buffer[i] && buffer[i] != '\n'; i++) {
+            if(buffer[i] < '0' || buffer[i] > '9') {
+                valid = 0;
+                break;
+            }
+        }
+        if(valid){
+            t.id = atoi(buffer);
+            break;
+        }
+        else 
+            write(1, "Invalid input, you must enter an integer number!\n", 50);
+    }
 
-    writeString("Username: ");
-    readInput(STDIN_FILENO, t.username, sizeof(t.username));
+    //username
+    while(1){
+        writeString("Username: ");
+        readInput(STDIN_FILENO, t.username, sizeof(t.username));
+        int onlyyDigits = 1;
+        for(int i = 0; t.username[i] && t.username[i] != '\n'; i++) {
+            if(t.username[i] < '0' || t.username[i] > '9') {
+                onlyyDigits = 0;
+                break;
+            }
+        }
+        if(!onlyyDigits) 
+            break;
+        else
+            write(1, "Invalid input, you must enter a string!\n", 41);
+    }
 
-    writeString("Latitude: ");
-    readInput(STDIN_FILENO, buffer, sizeof(buffer));
-    t.latitude = strtof(buffer, NULL);
+    //latitude
+    while(1){
+        writeString("Latitude: ");
+        readInput(STDIN_FILENO, buffer, sizeof(buffer));
+        char *endptr;
+        t.latitude = strtof(buffer, &endptr);
+        if(endptr != buffer && *endptr == '\0') 
+            break;
+        else
+            write(1, "Invalid input, you must enter a floating point number!\n", 56);
+    }
 
-    writeString("Longitude: ");
-    readInput(STDIN_FILENO, buffer, sizeof(buffer));
-    t.longitude = strtof(buffer, NULL);
+    //longitude
+    while(1){
+        writeString("Longitude: ");
+        readInput(STDIN_FILENO, buffer, sizeof(buffer));
+        char *endptr;
+        t.longitude = strtof(buffer, &endptr);
+        if(endptr != buffer && *endptr == '\0') 
+            break;
+        else
+            write(1, "Invalid input, you must enter a floating point number!\n", 56);
+    }
 
-    writeString("Clue: ");
-    readInput(STDIN_FILENO, t.clueText, sizeof(t.clueText));
+    //clueText
+    while(1){
+        writeString("Clue: ");
+        readInput(STDIN_FILENO, t.clueText, sizeof(t.clueText));
+        int onlyDigits = 1;
+        for(int i = 0; t.clueText[i] && t.clueText[i] != '\n'; i++) {
+            if(t.clueText[i] < '0' || t.clueText[i] > '9') {
+                onlyDigits = 0;
+                break;
+            }
+        }
+        if(!onlyDigits) 
+            break;
+        else
+            write(1, "Invalid input, you must enter a string!\n", 41);
+    }
 
-    writeString("Value: ");
-    readInput(STDIN_FILENO, buffer, sizeof(buffer));
-    t.value = atoi(buffer);
+    //value
+    while(1){
+        writeString("Value: ");
+        readInput(STDIN_FILENO, buffer, sizeof(buffer));
+        int valid = 1;
+        for(int i = 0; buffer[i] && buffer[i] != '\n'; i++) {
+            if(buffer[i] < '0' || buffer[i] > '9') {
+                valid = 0;
+                break;
+            }
+        }
+        if(valid){
+            t.value = atoi(buffer);
+            break;
+        }
+        else
+            write(1, "Invalid input, you must enter an integer number!\n", 38);
+    }
 
     write(fd, &t, sizeof(Treasure));
     close(fd);

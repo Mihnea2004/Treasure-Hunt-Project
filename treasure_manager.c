@@ -61,123 +61,156 @@ void logOperation(const char *hunt_id, char *message) {
 }
 
 void addTreasure(char *hunt_id) {
-    if(mkdir(hunt_id, 0755) < 0){
-        perror("An error occured while trying to create the directory!\n");
-        exit(-1);
+    if(access(hunt_id, F_OK) == -1){
+        if(mkdir(hunt_id, 0755) < 0){
+            perror("An error occurred while trying to create the directory!\n");
+            exit(-1);
+        }
     }
 
     char path[256];
     snprintf(path, sizeof(path), "%s/treasures.dat", hunt_id);
-    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    int fd = open(path, O_RDWR | O_CREAT, 0644);
     if(fd < 0){
         perror(NULL);
         exit(-1);
     }
 
-    Treasure t;
     char buffer[128];
+    Treasure t;
 
-    //id
     while(1){
-        writeString("Treasure ID: ");
-        readInput(STDIN_FILENO, buffer, sizeof(buffer));
-        int valid = 1;
-        for(int i = 0; buffer[i] && buffer[i] != '\n'; i++) {
-            if(buffer[i] < '0' || buffer[i] > '9') {
-                valid = 0;
-                break;
+        //ID
+        while(1){
+            writeString("Treasure ID: ");
+            readInput(STDIN_FILENO, buffer, sizeof(buffer));
+            int valid = 1;
+            for(int i = 0; buffer[i] && buffer[i] != '\n'; i++) {
+                if(buffer[i] < '0' || buffer[i] > '9') {
+                    valid = 0;
+                    break;
+                }
             }
-        }
-        if(valid){
+            if(!valid){
+                write(1, "Invalid input, you must enter an integer number!\n", 50);
+                continue;
+            }
+
             t.id = atoi(buffer);
+
+            // verificare duplicat ID
+            lseek(fd, 0, SEEK_SET);
+            Treasure temp;
+            int duplicate = 0;
+            while(read(fd, &temp, sizeof(Treasure)) == sizeof(Treasure)) {
+                if(temp.id == t.id) {
+                    duplicate = 1;
+                    break;
+                }
+            }
+
+            if(duplicate){
+                write(1, "A treasure with this ID already exists in the hunt!\n", 53);
+                continue;
+            }
+
             break;
         }
-        else 
-            write(1, "Invalid input, you must enter an integer number!\n", 50);
-    }
 
-    //username
-    while(1){
-        writeString("Username: ");
-        readInput(STDIN_FILENO, t.username, sizeof(t.username));
-        int onlyyDigits = 1;
-        for(int i = 0; t.username[i] && t.username[i] != '\n'; i++) {
-            if(t.username[i] < '0' || t.username[i] > '9') {
-                onlyyDigits = 0;
+        //username
+        while(1){
+            writeString("Username: ");
+            readInput(STDIN_FILENO, t.username, sizeof(t.username));
+            int onlyDigits = 1;
+            for(int i = 0; t.username[i] && t.username[i] != '\n'; i++) {
+                if(t.username[i] < '0' || t.username[i] > '9') {
+                    onlyDigits = 0;
+                    break;
+                }
+            }
+            if(!onlyDigits) 
+                break;
+            else 
+                write(1, "Invalid input, you must enter a string!\n", 41);
+        }
+
+        //latitude
+        while(1){
+            writeString("Latitude: ");
+            readInput(STDIN_FILENO, buffer, sizeof(buffer));
+            char *endptr;
+            t.latitude = strtof(buffer, &endptr);
+            if(endptr != buffer && *endptr == '\0') break;
+            else write(1, "Invalid input, you must enter a floating point number!\n", 56);
+        }
+
+        //longitude
+        while(1){
+            writeString("Longitude: ");
+            readInput(STDIN_FILENO, buffer, sizeof(buffer));
+            char *endptr;
+            t.longitude = strtof(buffer, &endptr);
+            if(endptr != buffer && *endptr == '\0') 
+                break;
+            else 
+                write(1, "Invalid input, you must enter a floating point number!\n", 56);
+        }
+
+        //clue
+        while(1){
+            writeString("Clue: ");
+            readInput(STDIN_FILENO, t.clueText, sizeof(t.clueText));
+            int onlyDigits = 1;
+            for(int i = 0; t.clueText[i] && t.clueText[i] != '\n'; i++) {
+                if(t.clueText[i] < '0' || t.clueText[i] > '9') {
+                    onlyDigits = 0;
+                    break;
+                }
+            }
+            if(!onlyDigits) 
+                break;
+            else 
+                write(1, "Invalid input, you must enter a string!\n", 41);
+        }
+
+        //value
+        while(1){
+            writeString("Value: ");
+            readInput(STDIN_FILENO, buffer, sizeof(buffer));
+            int valid = 1;
+            for(int i = 0; buffer[i] && buffer[i] != '\n'; i++) {
+                if(buffer[i] < '0' || buffer[i] > '9') {
+                    valid = 0;
+                    break;
+                }
+            }
+            if(valid){
+                t.value = atoi(buffer);
                 break;
             }
+            else 
+                write(1, "Invalid input, you must enter an integer number!\n", 50);
         }
-        if(!onlyyDigits) 
-            break;
-        else
-            write(1, "Invalid input, you must enter a string!\n", 41);
-    }
 
-    //latitude
-    while(1){
-        writeString("Latitude: ");
-        readInput(STDIN_FILENO, buffer, sizeof(buffer));
-        char *endptr;
-        t.latitude = strtof(buffer, &endptr);
-        if(endptr != buffer && *endptr == '\0') 
-            break;
-        else
-            write(1, "Invalid input, you must enter a floating point number!\n", 56);
-    }
-
-    //longitude
-    while(1){
-        writeString("Longitude: ");
-        readInput(STDIN_FILENO, buffer, sizeof(buffer));
-        char *endptr;
-        t.longitude = strtof(buffer, &endptr);
-        if(endptr != buffer && *endptr == '\0') 
-            break;
-        else
-            write(1, "Invalid input, you must enter a floating point number!\n", 56);
-    }
-
-    //clueText
-    while(1){
-        writeString("Clue: ");
-        readInput(STDIN_FILENO, t.clueText, sizeof(t.clueText));
-        int onlyDigits = 1;
-        for(int i = 0; t.clueText[i] && t.clueText[i] != '\n'; i++) {
-            if(t.clueText[i] < '0' || t.clueText[i] > '9') {
-                onlyDigits = 0;
-                break;
-            }
+        //writing in treasure.dat file
+        lseek(fd, 0, SEEK_END); //longseek to the end
+        if(write(fd, &t, sizeof(Treasure)) != sizeof(Treasure)){
+            perror("Failed to write treasure");
+            close(fd);
+            exit(-1);
         }
-        if(!onlyDigits) 
+
+        char option[8];
+        writeString("\nAdd another treasure? (yes/no): ");
+        readInput(STDIN_FILENO, option, sizeof(option));
+        if(strncmp(option, "no", 2) == 0)
             break;
-        else
-            write(1, "Invalid input, you must enter a string!\n", 41);
     }
 
-    //value
-    while(1){
-        writeString("Value: ");
-        readInput(STDIN_FILENO, buffer, sizeof(buffer));
-        int valid = 1;
-        for(int i = 0; buffer[i] && buffer[i] != '\n'; i++) {
-            if(buffer[i] < '0' || buffer[i] > '9') {
-                valid = 0;
-                break;
-            }
-        }
-        if(valid){
-            t.value = atoi(buffer);
-            break;
-        }
-        else
-            write(1, "Invalid input, you must enter an integer number!\n", 38);
-    }
-
-    write(fd, &t, sizeof(Treasure));
     close(fd);
-
-    write(1, "Adding was succesfully accomplished!\n", 37);
+    logOperation(hunt_id, "Adding treasures operation was successfully accomplished!\n");
 }
+
 
 void printTreasure(Treasure *t){
     char s[512];
@@ -212,7 +245,11 @@ void listTreasures(const char *hunt_id) {
         writeString(line);
     }
 
-    close(fd);
+    if(close(fd) < 0){
+        perror("An error occured while trying to close the file!\n");
+        exit(-1);
+    }
+
     logOperation(hunt_id, "List treasures operation was succesfully accomplished!\n");
 }
 
@@ -256,14 +293,14 @@ void viewTreasures(const char *hunt_id, int id){
     else{
         write(1, "Not found!\n", 11);
         if(close(fd) < 0){
-            perror("An error occured while trying to close the file!");
+            perror("An error occured while trying to close the file!\n");
             exit(-1);
         }
         return;
     }
 
     if(close(fd) < 0){
-        perror("An error occured while trying to close the file!");
+        perror("An error occured while trying to close the file!\n");
         exit(-1);
     }
 
@@ -279,76 +316,78 @@ void removeTreasure(const char *hunt_id, int id){
     snprintf(filePath, sizeof(filePath), "%s/treasures.dat", hunt_id);
     snprintf(tempFile, sizeof(tempFile), "%s/temporary.dat", hunt_id);
 
-    //check directory existence
     struct stat st;
-    if(stat(hunt_id, &st) != 0){
-        perror("Path to this directory doesn't exist!");
-        exit(-1);
-    }
-    else if(S_ISDIR(st.st_mode) == 0){
-        perror("Not a directory!");
+    if(stat(hunt_id, &st) != 0 || !S_ISDIR(st.st_mode)){
+        perror("Invalid hunt directory!\n");
         exit(-1);
     }
 
-    //open treasure.dat file
     int fd = open(filePath, O_RDONLY);
     if(fd < 0){
-        perror("treasure.dat file cannot be open!");
+        perror("treasure.dat file cannot be opened!\n");
         exit(-1);
     }
 
-    //create new file to add all treasures but the one with the ID given
     int out = open(tempFile, O_WRONLY | O_CREAT | O_TRUNC, 0777);
     if(out == -1){
-        perror("An error occured while trying to open the file!");
+        perror("An error occurred while trying to open temporary file!\n");
+        close(fd);
         exit(-1);
     }
 
     Treasure t;
     int found = 0;
     ssize_t r;
+
     while((r = read(fd, &t, sizeof(Treasure))) == sizeof(Treasure)){
         if(t.id == id){
             found = 1;
             continue;
         }
-        write(out, &t, sizeof(Treasure));
+        if(write(out, &t, sizeof(Treasure)) != sizeof(Treasure)){
+            perror("Error writing to temporary file!");
+            close(fd);
+            close(out);
+            exit(-1);
+        }
     }
 
-    if(r != 0){
-        perror("An error occured while reading from the file!");
+    if(r == -1){
+        perror("Error while reading from the file!");
+        close(fd);
+        close(out);
         exit(-1);
     }
 
-    if(close(fd) < 0 || close(out) < 0){
+    if(close(fd) < 0){
         perror("An error occured while trying to close the file!\n");
         exit(-1);
     }
 
-    //replacing files
-    if(found == 1){
+    if(close(out) < 0){
+        perror("An error occured while trying to close the file!\n");
+        exit(-1);
+    }
+
+    if(found){
         if(remove(filePath) != 0 || rename(tempFile, filePath) != 0){
-            perror("Deleating failed!\n");
+            perror("Replacing files failed!");
             exit(-1);
         }
+
+        char logPath[256], logMessage[256];
+        snprintf(logPath, sizeof(logPath), "%s/logged_hunt", hunt_id);
+        snprintf(logMessage, sizeof(logMessage), "Treasure with ID: %d was removed!\n", id);
+        logOperation(logPath, logMessage);
+
+        write(1, "Treasure deleting was successfully accomplished!\n", 50);
     }
     else{
-        if(remove(tempFile) != 0){
-            perror("An error occured while trying to remove the file!\n");
-            exit(-1);
-        }
+        remove(tempFile);
         write(1, "Treasure couldn't be found!\n", 28);
-        return;
     }
-
-    //updating log hunt
-    char logPath[256], logMessage[256];
-    snprintf(logPath, sizeof(logPath), "%s/logged_hunt", hunt_id);
-    snprintf(logMessage, sizeof(logMessage), "Treasure with ID: %d was removed!\n", id);
-    logOperation(logPath, logMessage);
-
-    write(1, "Treasure deleating was succesfully accomplished!\n", 50);
 }
+
 
 void removeHunt(const char *hunt_id){
     char filePath[256], logPath[256], linkPath[256];

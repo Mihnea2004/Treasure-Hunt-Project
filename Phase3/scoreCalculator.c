@@ -11,9 +11,6 @@
 #include <ctype.h>
 
 #define MAX_USERS 100
-#define BRED "\e[1;31m"
-#define BGRN "\e[1;32m"
-#define reset "\e[0m"
 
 typedef struct {
     int id;
@@ -57,7 +54,7 @@ void score_hunt(const char *hunt_id){
    }
 
    //reading
-   score array[MAX_USERS];
+   Score array[MAX_USERS];
    init_score(array, MAX_USERS);
    int size = 0; //number of users initially
    Treasure t;
@@ -87,7 +84,7 @@ void score_hunt(const char *hunt_id){
       exit(-1);
    }
    
-   printf(BGRN "The scores for %s:\n" reset, hunt_id);
+   printf("The scores for %s:\n", hunt_id);
    for(int i = 0; i < size; i++)
       printf("Name: %s, total: %d\n", array[i].name, array[i].total);
 

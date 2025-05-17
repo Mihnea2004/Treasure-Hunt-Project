@@ -1,4 +1,4 @@
-This project aims to simulate a Treasure Hunt game, required at the Operating Systems Course. It is implemented in 3 Phases and you can add, view, list and remove, both hunts and treasures.
+This project aims to simulate a Treasure Hunt game, required at the Operating Systems Course. It is implemented in 3 Phases:
 
 Phase 1 - treasure_manager.c: You can test the code by writing the instructions below in your terminal:
   1. gcc -Wall -o exe treasure_manager.c

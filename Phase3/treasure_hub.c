@@ -180,8 +180,8 @@ void viewTreasures(const char *hunt_id, int id){
 }
 
 void calculateScore(){
-   DIR *dir=opendir(".");
-    if(dir==NULL){
+   DIR *dir = opendir(".");
+    if(dir == NULL){
         perror("An error occured while trying to open the directory!\n");
         exit(-1);
     }
@@ -205,8 +205,8 @@ void calculateScore(){
                 exit(-1);
             }
             else if(pid == 0){
-                close(pipeMonitorNephews[0]); //doesn't read
-                dup2(pipeMonitorNephews[1], 1);
+                close(pipeMonitorNephews[0]); //doesn't read anymore!
+                dup2(pipeMonitorNephews[1], 1); //forwards stdout to pipeMonitorNephews
                 close(pipeMonitorNephews[1]);
 
                 execlp("./scoreCalculator", "./scoreCalculator", entry->d_name, NULL);
@@ -227,7 +227,10 @@ void calculateScore(){
         printf("%s", buffer);
     }
     close(pipeMonitorNephews[0]);
-    closedir(dir);
+    if(closedir(dir) == -1){
+        perror("An error occured while trying to close the directory!\n");
+        exit(-1);
+    }
 }
 
 void handler1(int sig){
@@ -310,10 +313,10 @@ void monitorLoop(){
     sigaction(SIGUSR2, &s2, NULL);
 
     struct sigaction act_chld;
-   act_chld.sa_handler = SIG_IGN; // ignores the SIGCHLD from nephews
-   sigemptyset(&act_chld.sa_mask);
-   act_chld.sa_flags = 0;
-   sigaction(SIGCHLD, &act_chld, NULL);
+    act_chld.sa_handler = SIG_IGN; // ignores the SIGCHLD from nephews
+    sigemptyset(&act_chld.sa_mask);
+    act_chld.sa_flags = 0;
+    sigaction(SIGCHLD, &act_chld, NULL);
 
     while(1)
         pause(); //Waiting for signals

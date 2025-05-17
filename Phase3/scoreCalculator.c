@@ -10,28 +10,30 @@
 #include <fcntl.h>
 #include <ctype.h>
 
-#define MAX_USERS 100
+#define SIZE_MAX_USERS 100
 
-typedef struct {
-    int id;
-    char name[32];
-    float x,y;
-    char clue[128];
-    int value;
+typedef struct{
+   int id;
+   char name[32];
+   float latitude;
+   float longitude;
+   char clue[128];
+   int value;
 } Treasure;
 
-typedef struct {
-    char name[32];
-    int total;
+typedef struct{
+   char name[32];
+   int total;
 } Score;
 
-void init_score(Score *v, int max_size){
-   for(int i = 0; i < max_size; i++){
-      strcpy(v[i].name, "");
-      v[i].total = 0;
+void initialiseScore(Score *scores, int index){
+   for(int i = 0; i < index; i++){
+      strcpy(scores[i].name, "");
+      scores[i].total = 0;
    }
 }
-void score_hunt(const char *hunt_id){
+
+void findHuntScore(const char *hunt_id){
    char file_path[256];
    snprintf(file_path,sizeof(file_path), "%s/treasures.dat", hunt_id);
 
@@ -46,22 +48,22 @@ void score_hunt(const char *hunt_id){
       return;
    }
 
-   //open treasure.dat file
+   //open treasures.dat file
    int fd = open(file_path, O_RDONLY);
    if(fd == -1){
-      perror("The file couldn't be opened or it doesn't exist!");
+      perror("An error occured while trying to open the file!\n");
       exit(-1);
    }
 
-   //reading
-   Score array[MAX_USERS];
-   init_score(array, MAX_USERS);
-   int size = 0; //number of users initially
+   //read from file
+   Score array[SIZE_MAX_USERS];
+   initialiseScore(array, SIZE_MAX_USERS);
+   int index = 0; //number of users initially
    Treasure t;
    ssize_t bytes;
-   while((bytes=read(fd,&t,sizeof(Treasure))) == sizeof(Treasure)){
+   while((bytes = read(fd, &t, sizeof(Treasure))) == sizeof(Treasure)){
       int found = 0;
-      for(int i = 0; i < size; i++){
+      for(int i = 0; i < index; i++){
          if(strcmp(t.name, array[i].name)==0){
             found = 1;
             array[i].total += t.value;
@@ -69,25 +71,24 @@ void score_hunt(const char *hunt_id){
          }
       }
       if(found == 0){
-         strcpy(array[size].name, t.name);
-         array[size++].total = t.value;
+         strcpy(array[index].name, t.name);
+         array[index++].total = t.value;
       }
    }
    
    if(bytes != 0){
-      printf("Error at reading!\n");
+      printf("An error occured while trying to read from the file!\n");
       return;
    }
 
    if(close(fd) != 0){
-      perror("Error at closing!");
+      perror("An error occured while trying to close the file!\n");
       exit(-1);
    }
    
    printf("The scores for %s:\n", hunt_id);
-   for(int i = 0; i < size; i++)
-      printf("Name: %s, total: %d\n", array[i].name, array[i].total);
-
+   for(int i = 0; i < index; i++)
+      printf("Name: %s, Total: %d\n", array[i].name, array[i].total);
 }
 
 int main(int argc, char **argv){
@@ -96,6 +97,6 @@ int main(int argc, char **argv){
       exit(-1);
    }
 
-   score_hunt(argv[1]);
+   findHuntScore(argv[1]);
    return 0;
 }

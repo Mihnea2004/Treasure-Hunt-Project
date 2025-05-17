@@ -18,7 +18,7 @@ Phase 2 - treasure_hub.c: You can test the code by writing the instructions belo
   7. prompt > stopMonitor
   8. prompt > exit
 
-Phase 3 - treasure_hub.c: It implements the same features as Phase 2, but, in addition, there is a new command, calulcateScore, which creates a process for each existing hunt that calculates and outputs the scores of users in that hunt. You can test the code by writing the instructions below in your terminal:
+Phase 3 - score_calculator.c + treasure_hub.c: It implements the same features as Phase 2, but, in addition, there is a new command, calulcateScore, which creates a process for each existing hunt that calculates and outputs the scores of users in that hunt. You can test the code by writing the instructions below in your terminal:
   1. gcc -Wall -o exe treasure_hub.c
   2. ./exe [then you will see the command prompt, written in purple]
   3. prompt > startMonitor
